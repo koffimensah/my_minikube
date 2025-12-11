@@ -1,29 +1,29 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-app
+  name: {{ .Values.deployment.name }}
 spec:
-  replicas: 3
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: my-app
+      app: {{ .Values.deployment.name }}
   template:
     metadata:
       labels:
-        app: my-app
+        app: {{ .Values.deployment.name }}
     spec:
       containers:
-        - name: my-container
-          image: nginx:1.19
+        - name: {{ .Values.containers.name }}
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
           ports:
-            - containerPort: 80
+            - containerPort: {{ .Values.ports.containerPort }}
           resources:
             requests:
-              memory: "64Mi"
-              cpu: "250m"
+              memory: {{ .Values.resources.request.memory }}
+              cpu: {{ .Values.resources.request.cpu }}
             limits:
-              memory: "128Mi"
-              cpu: "500m"
+              memory: {{ .Values.resources.limits.memory }}
+              cpu: {{ .Values.resources.limits.cpu }}
           livenessProbe:
             httpGet:
               path: /
@@ -40,23 +40,23 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: my-app-service
+  name: {{ .Values.service.name }}
 spec:
   selector:
-    app: my-app
+    app: {{ .Values.service.name }}
   ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
-  type: NodePort
+    - protocol: {{ .Values.service.ports.protocol }}
+      port: {{ .Values.service.ports.port }}
+      targetPort: {{ .Values.service.ports.targetPort }}
+  type: {{ .Values.service.type }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: my-app-config
+  name: {{ .Values.configMap.name }}
 data:
-  app.name: "My Awesome App"
-  app.environment: "development"
+  app.name: {{ .Values.configMap.app.name }}
+  app.environment: {{ .Values.configMap.app.environment }}
   nginx.conf: |
     server {
       listen 80;
@@ -70,8 +70,8 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: my-app-secret
-type: Opaque
+  name: {{ .Values.secret.name }}
+type: {{ .Values.secret.type }}
 data:
   # This is base64 encoded "mysecretpassword"
   database-password: bXlzZWNyZXRwYXNzd29yZA==
@@ -81,12 +81,12 @@ data:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: my-app-hpa
+  name: {{ .Values.hpa.name }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: my-app
+    name: {{ .Values.deployment.name }}
   minReplicas: 2
   maxReplicas: 10
   metrics:
@@ -106,33 +106,33 @@ spec:
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: my-app-pdb
+  name: {{ .Values.deployment.name }}-pdb
 spec:
   minAvailable: 1
   selector:
     matchLabels:
-      app: my-app
+      app: {{ .Values.deployment.name }}
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: my-app-sa
+  name: {{ .Values.deployment.name }}-sa
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: my-app-ingress
+  name: {{ .Values.deployment.name }}-ingress
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
-  - host: my-app.local
+  - host: {{ .Values.deployment.name }}.local
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: my-app-service
+            name: {{ .Values.deployment.name }}-service
             port:
               number: 80

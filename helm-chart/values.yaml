@@ -1,0 +1,44 @@
+deployment:
+name: my-app
+
+replicaCount: 3
+
+containers: 
+  name: my-container
+
+image:
+  repository: nginx
+  tag: 1.19 
+
+ports: 
+  containerPort: 80
+
+resources: 
+  request: 
+    memory: "64Mi"
+    cpu: "250m"
+  limits: 
+    memory: "128Mi"
+    cpu: "500m"
+----
+service:
+  name: my-app-service
+  ports: 
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: NodePort
+
+---
+configMap:
+  name: my-app-config
+  app.name: "My Awesome App"
+  app.environment: "development"
+
+---
+secret:
+  name: my-app-secret
+  type: Opaque
+---
+hpa:
+  name: my-app-hpa
